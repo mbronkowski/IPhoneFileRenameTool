@@ -8,7 +8,7 @@ namespace IPhoneFileRenameTool
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
             .WriteTo.File("log.txt") // Set the path to your log file
@@ -17,7 +17,16 @@ namespace IPhoneFileRenameTool
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new IPhoneFileRanameForm());
+            IPhoneFileRanameForm mainForm;
+            if (args.Length > 0 )
+            {
+                mainForm = new IPhoneFileRanameForm(args[0]);
+            }
+            else
+            {
+                mainForm = new IPhoneFileRanameForm();
+            }
+            Application.Run(mainForm);
         }
     }
 }

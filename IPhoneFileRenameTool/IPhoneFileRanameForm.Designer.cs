@@ -42,6 +42,7 @@ namespace IPhoneFileRenameTool
             btnSelectFolder = new Button();
             chkConvert = new CheckBox();
             label2 = new Label();
+            button1 = new Button();
             SuspendLayout();
             // 
             // label1
@@ -138,11 +139,23 @@ namespace IPhoneFileRenameTool
             label2.TabIndex = 11;
             label2.Text = "Convert HICF to JPG";
             // 
+            // button1
+            // 
+            button1.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            button1.Location = new Point(12, 158);
+            button1.Name = "button1";
+            button1.Size = new Size(207, 29);
+            button1.TabIndex = 12;
+            button1.Text = "Register file explorer action";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
             // IPhoneFileRanameForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(594, 199);
+            Controls.Add(button1);
             Controls.Add(label2);
             Controls.Add(chkConvert);
             Controls.Add(btnSelectFolder);
@@ -171,5 +184,6 @@ namespace IPhoneFileRenameTool
         private Button btnSelectFolder;
         private CheckBox chkConvert;
         private Label label2;
+        private Button button1;
     }
 }

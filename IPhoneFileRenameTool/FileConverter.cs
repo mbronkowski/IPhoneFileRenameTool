@@ -69,7 +69,7 @@ namespace IPhoneFileRenameTool
         private bool IsValidMediaFile()
         {
             string extension = Path.GetExtension(_currentFilePath).ToUpper();
-            return extension == ".JPEG" || extension == ".JPEG" || extension == ".MOV" || extension == ".MP4";
+            return extension == ".HEIC" || extension == ".JPEG" || extension == ".JPEG" || extension == ".MOV" || extension == ".MP4";
         }
 
         private void RenameFile()

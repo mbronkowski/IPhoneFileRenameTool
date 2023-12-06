@@ -10,7 +10,7 @@ Addiniotanly if you have media files form other apps it will rename them to {GUI
 
 The app was created in couple of hours so it will require some additional work to polish.
 
-some basic features that are still miessing:
+Some basic features that are still miessing:
 - progress bar
 - checkbox to turn on/turn off logging
 - icon

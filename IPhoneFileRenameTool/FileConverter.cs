@@ -69,7 +69,7 @@ namespace IPhoneFileRenameTool
         private bool IsValidMediaFile()
         {
             string extension = Path.GetExtension(_currentFilePath).ToUpper();
-            return extension == ".HEIC" || extension == ".JPEG" || extension == ".JPEG" || extension == ".MOV" || extension == ".MP4";
+            return extension == ".HEIC" || extension == ".JPEG" || extension == ".JPG" || extension == ".MOV" || extension == ".MP4";
         }
 
         private void RenameFile()
@@ -149,6 +149,14 @@ namespace IPhoneFileRenameTool
                     if (directory != null)
                     {
                         return directory.GetDateTime((int)QuickTimeMetadataHeaderDirectory.TagCreationDate);
+                    }
+                    else
+                    {
+                        QuickTimeMovieHeaderDirectory? directory2 = directories.OfType<QuickTimeMovieHeaderDirectory>().FirstOrDefault();
+                        if (directory2 != null)
+                        {
+                            return directory2.GetDateTime((int)QuickTimeMovieHeaderDirectory.TagCreated);
+                        }
                     }
                 }
                 else if (filePath.EndsWith(".JPG") || filePath.EndsWith(".HEIC"))

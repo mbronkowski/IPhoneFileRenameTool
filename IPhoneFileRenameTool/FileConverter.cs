@@ -146,7 +146,7 @@ namespace IPhoneFileRenameTool
                 if (filePath.EndsWith(".MOV") || filePath.EndsWith(".MP4"))
                 {
                     QuickTimeMetadataHeaderDirectory? directory = directories.OfType<QuickTimeMetadataHeaderDirectory>().FirstOrDefault();
-                    if (directory != null)
+                    if (directory != null && directory.ContainsTag((int)QuickTimeMetadataHeaderDirectory.TagCreationDate))
                     {
                         return directory.GetDateTime((int)QuickTimeMetadataHeaderDirectory.TagCreationDate);
                     }

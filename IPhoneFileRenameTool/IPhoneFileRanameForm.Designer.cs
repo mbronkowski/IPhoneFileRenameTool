@@ -43,6 +43,9 @@ namespace IPhoneFileRenameTool
             chkConvert = new CheckBox();
             label2 = new Label();
             button1 = new Button();
+            numHourOffset = new NumericUpDown();
+            label5 = new Label();
+            ((System.ComponentModel.ISupportInitialize)numHourOffset).BeginInit();
             SuspendLayout();
             // 
             // label1
@@ -150,11 +153,33 @@ namespace IPhoneFileRenameTool
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
             // 
+            // numHourOffset
+            // 
+            numHourOffset.DecimalPlaces = 1;
+            numHourOffset.Increment = new decimal(new int[] { 1, 0, 0, 65536 });
+            numHourOffset.Location = new Point(480, 107);
+            numHourOffset.Maximum = new decimal(new int[] { 999999, 0, 0, 0 });
+            numHourOffset.Minimum = new decimal(new int[] { 99999, 0, 0, int.MinValue });
+            numHourOffset.Name = "numHourOffset";
+            numHourOffset.Size = new Size(94, 27);
+            numHourOffset.TabIndex = 13;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(357, 112);
+            label5.Name = "label5";
+            label5.Size = new Size(117, 20);
+            label5.TabIndex = 14;
+            label5.Text = "Date hour offset";
+            // 
             // IPhoneFileRanameForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(594, 199);
+            Controls.Add(label5);
+            Controls.Add(numHourOffset);
             Controls.Add(button1);
             Controls.Add(label2);
             Controls.Add(chkConvert);
@@ -168,6 +193,7 @@ namespace IPhoneFileRenameTool
             Controls.Add(label1);
             Name = "IPhoneFileRanameForm";
             Text = "IPhone file rename tool";
+            ((System.ComponentModel.ISupportInitialize)numHourOffset).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -185,5 +211,7 @@ namespace IPhoneFileRenameTool
         private CheckBox chkConvert;
         private Label label2;
         private Button button1;
+        private NumericUpDown numHourOffset;
+        private Label label5;
     }
 }

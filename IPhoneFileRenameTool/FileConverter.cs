@@ -18,16 +18,17 @@ namespace IPhoneFileRenameTool
         protected string FilePostfix { get; set; }
         protected string FileFormat { get; set; }
         protected bool ConvertHcifToJpg { get; set; }
-
+        protected double DateHourOffset { get; set; }
         private string _currentFilePath;
         private ConversionResult ConversionResult { get; set; } = new ConversionResult();
-        public static FileConverter Create(string folderPath, string filePostfix, string fileFormat, bool convertHcifToJpg)
+        public static FileConverter Create(string folderPath, string filePostfix, string fileFormat, bool convertHcifToJpg, double dateHourOffset)
         {
             var fileConverter = new FileConverter();
             fileConverter.FolderPath = folderPath;
             fileConverter.FilePostfix = filePostfix;
             fileConverter.FileFormat = fileFormat;
-            fileConverter.ConvertHcifToJpg = convertHcifToJpg; 
+            fileConverter.ConvertHcifToJpg = convertHcifToJpg;
+            fileConverter.DateHourOffset = dateHourOffset;
             return fileConverter;
         }
 
@@ -117,7 +118,7 @@ namespace IPhoneFileRenameTool
 
         private string GetCorrectFileName(DateTime dateTeken)
         {
-            return dateTeken.ToString(FileFormat) + FilePostfix;
+            return dateTeken.AddHours(DateHourOffset).ToString(FileFormat) + FilePostfix;
         }
 
         private bool ShouldBeConverted()

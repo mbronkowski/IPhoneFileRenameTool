@@ -48,7 +48,7 @@ namespace IPhoneFileRenameTool
                 Log.Logger = new LoggerConfiguration()
                     .WriteTo.File(Path.Combine(txtFolder.Text, "log.txt")) // Set the path to your log file
                     .CreateLogger();
-                FileConverter converter = FileConverter.Create(txtFolder.Text, txtPostfix.Text, txtFormat.Text, chkConvert.Checked);
+                FileConverter converter = FileConverter.Create(txtFolder.Text, txtPostfix.Text, txtFormat.Text, chkConvert.Checked, Convert.ToDouble(numHourOffset.Value));
                 MessageBox.Show(converter.RenameAndConvert().ToString());
             }
             catch (Exception ex)
@@ -63,6 +63,7 @@ namespace IPhoneFileRenameTool
             SaveToRegistry("format", txtFormat.Text);
             SaveToRegistry("postfix", txtPostfix.Text);
             SaveToRegistry("converHicf", chkConvert.Checked.ToString());
+            SaveToRegistry("dateHourOffset", numHourOffset.Value.ToString());
         }
 
         private void LoadSettingsInRegistry()
@@ -73,6 +74,9 @@ namespace IPhoneFileRenameTool
             var strConvertHicf = LoadFromRegistry("converHicf");
             if (bool.TryParse(strConvertHicf, out bool convertHicf))
                 chkConvert.Checked = convertHicf;
+            var strDateHourOffset = LoadFromRegistry("dateHourOffset");
+            if (decimal.TryParse(strDateHourOffset, out decimal dateHourOffset))
+                numHourOffset.Value = dateHourOffset;
         }
 
         private const string RegistryKeyPath = @"SOFTWARE\EdsSoftware\IphoneFileRanameTool";
@@ -114,7 +118,7 @@ namespace IPhoneFileRenameTool
             // Specify the name of your custom action
             string actionName = "Rename IPhone media files";
 
-            
+
             // Specify the path to your application executable
             string appPath = Assembly.GetEntryAssembly().Location; // @"C:\Path\To\Your\Application.exe";
             appPath = appPath.Remove(appPath.Length - 3) + "exe";

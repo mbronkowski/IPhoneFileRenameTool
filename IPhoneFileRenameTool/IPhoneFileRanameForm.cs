@@ -20,8 +20,30 @@ namespace IPhoneFileRenameTool
         public IPhoneFileRanameForm()
         {
             InitializeComponent();
+            ApplyIcons();
             LoadSettingsInRegistry();
             UpdateFormatPreview();
+        }
+
+        private void ApplyIcons()
+        {
+            // App / title-bar icon – read the icon that is embedded in the exe
+            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+
+            // Browse folder button – show only a folder icon, no "..." text
+            btnSelectFolder.Image     = Icons.FolderSmall();
+            btnSelectFolder.Text      = string.Empty;
+            btnSelectFolder.ImageAlign = ContentAlignment.MiddleCenter;
+            btnSelectFolder.Padding   = new Padding(2);
+
+            // Rename / Cancel buttons – icon on the left, text on the right
+            btnRename.Image              = Icons.PlaySmall();
+            btnRename.TextImageRelation  = TextImageRelation.ImageBeforeText;
+            btnRename.ImageAlign         = ContentAlignment.MiddleLeft;
+
+            btnCancel.Image              = Icons.StopSmall();
+            btnCancel.TextImageRelation  = TextImageRelation.ImageBeforeText;
+            btnCancel.ImageAlign         = ContentAlignment.MiddleLeft;
         }
 
         public IPhoneFileRanameForm(string folderPath) : this()
@@ -204,6 +226,9 @@ namespace IPhoneFileRenameTool
             {
                 if (folderShellKey != null)
                 {
+                    // Icon shown in the Explorer context menu (first icon embedded in the exe)
+                    folderShellKey.SetValue("Icon", $"\"{appPath}\",0");
+
                     using (RegistryKey commandKey = folderShellKey.CreateSubKey("command"))
                     {
                         if (commandKey != null)

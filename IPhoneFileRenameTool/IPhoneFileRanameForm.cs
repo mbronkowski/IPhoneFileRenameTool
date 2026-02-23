@@ -9,12 +9,15 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IPhoneFileRenameTool
 {
     public partial class IPhoneFileRanameForm : Form
     {
+        private CancellationTokenSource? _cts;
+
         public IPhoneFileRanameForm()
         {
             InitializeComponent();
@@ -38,23 +41,60 @@ namespace IPhoneFileRenameTool
             }
         }
 
-        private void btnRename_Click(object sender, EventArgs e)
+        private async void btnRename_Click(object sender, EventArgs e)
         {
             try
             {
                 if (!System.IO.Directory.Exists(txtFolder.Text))
-                    throw new Exception($"Directory \"{txtFolder.Text}\" dosen't exist!");
+                    throw new Exception($"Directory \"{txtFolder.Text}\" doesn't exist!");
                 SaveSettingsInRegistry();
                 Log.Logger = new LoggerConfiguration()
-                    .WriteTo.File(Path.Combine(txtFolder.Text, "log.txt")) // Set the path to your log file
+                    .WriteTo.File(Path.Combine(txtFolder.Text, "log.txt"))
                     .CreateLogger();
-                FileConverter converter = FileConverter.Create(txtFolder.Text, txtPostfix.Text, txtFormat.Text, chkConvert.Checked, Convert.ToDouble(numHourOffset.Value));
-                MessageBox.Show(converter.RenameAndConvert().ToString());
+
+                btnRename.Enabled = false;
+                btnCancel.Enabled = true;
+                progressBar.Value = 0;
+                _cts = new CancellationTokenSource();
+
+                var progress = new Progress<(int current, int total)>(r =>
+                {
+                    if (r.total > 0)
+                        progressBar.Value = (int)((double)r.current / r.total * 100);
+                });
+
+                var converter = FileConverter.Create(
+                    txtFolder.Text, txtPostfix.Text, txtFormat.Text,
+                    chkConvert.Checked, Convert.ToDouble(numHourOffset.Value),
+                    chkRecursive.Checked);
+
+                var result = await converter.RenameAndConvertAsync(progress, _cts.Token);
+                if (!result.IsCancelled) progressBar.Value = 100;
+                MessageBox.Show(result.ToString());
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error while processing files: " + ex.Message);
             }
+            finally
+            {
+                btnRename.Enabled = true;
+                btnCancel.Enabled = false;
+                _cts?.Dispose();
+                _cts = null;
+            }
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            _cts?.Cancel();
+            btnCancel.Enabled = false;
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            _cts?.Cancel();
+            base.OnFormClosing(e);
         }
 
         private void SaveSettingsInRegistry()
@@ -64,6 +104,7 @@ namespace IPhoneFileRenameTool
             SaveToRegistry("postfix", txtPostfix.Text);
             SaveToRegistry("converHicf", chkConvert.Checked.ToString());
             SaveToRegistry("dateHourOffset", numHourOffset.Value.ToString());
+            SaveToRegistry("recursive", chkRecursive.Checked.ToString());
         }
 
         private void LoadSettingsInRegistry()
@@ -77,6 +118,9 @@ namespace IPhoneFileRenameTool
             var strDateHourOffset = LoadFromRegistry("dateHourOffset");
             if (decimal.TryParse(strDateHourOffset, out decimal dateHourOffset))
                 numHourOffset.Value = dateHourOffset;
+            var strRecursive = LoadFromRegistry("recursive");
+            if (bool.TryParse(strRecursive, out bool recursive))
+                chkRecursive.Checked = recursive;
         }
 
         private const string RegistryKeyPath = @"SOFTWARE\EdsSoftware\IphoneFileRanameTool";

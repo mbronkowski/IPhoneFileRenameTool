@@ -19,9 +19,10 @@ namespace IPhoneFileRenameTool
         protected string FileFormat { get; set; }
         protected bool ConvertHcifToJpg { get; set; }
         protected double DateHourOffset { get; set; }
+        protected bool Recursive { get; set; }
         private string _currentFilePath;
         private ConversionResult ConversionResult { get; set; } = new ConversionResult();
-        public static FileConverter Create(string folderPath, string filePostfix, string fileFormat, bool convertHcifToJpg, double dateHourOffset)
+        public static FileConverter Create(string folderPath, string filePostfix, string fileFormat, bool convertHcifToJpg, double dateHourOffset, bool recursive = false)
         {
             var fileConverter = new FileConverter();
             fileConverter.FolderPath = folderPath;
@@ -29,6 +30,7 @@ namespace IPhoneFileRenameTool
             fileConverter.FileFormat = fileFormat;
             fileConverter.ConvertHcifToJpg = convertHcifToJpg;
             fileConverter.DateHourOffset = dateHourOffset;
+            fileConverter.Recursive = recursive;
             return fileConverter;
         }
 
@@ -67,6 +69,43 @@ namespace IPhoneFileRenameTool
             return ConversionResult;
         }
 
+        public async Task<ConversionResult> RenameAndConvertAsync(
+            IProgress<(int current, int total)>? progress,
+            CancellationToken cancellationToken)
+        {
+            return await Task.Run(() =>
+            {
+                ConversionResult = new ConversionResult();
+                var searchOption = Recursive
+                    ? SearchOption.AllDirectories
+                    : SearchOption.TopDirectoryOnly;
+                var files = System.IO.Directory.GetFiles(FolderPath, "*", searchOption);
+                int total = files.Length;
+                int current = 0;
+
+                foreach (var file in files)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        ConversionResult.SetCancelled();
+                        break;
+                    }
+                    _currentFilePath = file;
+                    progress?.Report((++current, total));
+                    try
+                    {
+                        ConversionResult.IncrementProcessedFiles();
+                        if (!IsValidMediaFile()) { ConversionResult.IncrementConversionSkipped(); continue; }
+                        if (ShouldBeConverted()) ConvertHeifToJpg(file);
+                        else ConversionResult.IncrementConversionSkipped();
+                        RenameFile();
+                    }
+                    catch (Exception ex) { ConversionResult.IncrementErrors(); Log.Error(ex, "error"); }
+                }
+                return ConversionResult;
+            }, cancellationToken);
+        }
+
         private bool IsValidMediaFile()
         {
             string extension = Path.GetExtension(_currentFilePath).ToUpper();
@@ -100,7 +139,8 @@ namespace IPhoneFileRenameTool
         {
             string correctFileName = GetCorrectFileName(dateTeken);
             string extension = Path.GetExtension(_currentFilePath);
-            string newFilePathBase = Path.Combine(FolderPath, correctFileName);
+            string fileDirectory = Path.GetDirectoryName(_currentFilePath)!;
+            string newFilePathBase = Path.Combine(fileDirectory, correctFileName);
             string newFilePathWithoutExtension = newFilePathBase;
             int i = 1;
             while (File.Exists(newFilePathWithoutExtension + extension))
@@ -144,7 +184,7 @@ namespace IPhoneFileRenameTool
             {
                 // Read all metadata from the video file
                 var directories = ImageMetadataReader.ReadMetadata(filePath);
-                if (filePath.EndsWith(".MOV") || filePath.EndsWith(".MP4"))
+                if (filePath.EndsWith(".MOV", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".MP4", StringComparison.OrdinalIgnoreCase))
                 {
                     QuickTimeMetadataHeaderDirectory? directory = directories.OfType<QuickTimeMetadataHeaderDirectory>().FirstOrDefault();
                     if (directory != null && directory.ContainsTag((int)QuickTimeMetadataHeaderDirectory.TagCreationDate))
@@ -160,7 +200,7 @@ namespace IPhoneFileRenameTool
                         }
                     }
                 }
-                else if (filePath.EndsWith(".JPG") || filePath.EndsWith(".HEIC"))
+                else if (filePath.EndsWith(".JPG", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".HEIC", StringComparison.OrdinalIgnoreCase))
                 {
                     ExifSubIfdDirectory? directory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
                     if (directory != null)

@@ -1,4 +1,4 @@
-﻿using Point = System.Drawing.Point;
+using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
 using SizeF = System.Drawing.SizeF;
 
@@ -45,6 +45,10 @@ namespace IPhoneFileRenameTool
             button1 = new Button();
             numHourOffset = new NumericUpDown();
             label5 = new Label();
+            label6 = new Label();
+            chkRecursive = new CheckBox();
+            progressBar = new ProgressBar();
+            btnCancel = new Button();
             ((System.ComponentModel.ISupportInitialize)numHourOffset).BeginInit();
             SuspendLayout();
             // 
@@ -105,7 +109,7 @@ namespace IPhoneFileRenameTool
             // btnRename
             // 
             btnRename.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnRename.Location = new Point(480, 158);
+            btnRename.Location = new Point(480, 218);
             btnRename.Name = "btnRename";
             btnRename.Size = new Size(94, 29);
             btnRename.TabIndex = 8;
@@ -145,7 +149,7 @@ namespace IPhoneFileRenameTool
             // button1
             // 
             button1.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            button1.Location = new Point(12, 158);
+            button1.Location = new Point(12, 218);
             button1.Name = "button1";
             button1.Size = new Size(207, 29);
             button1.TabIndex = 12;
@@ -173,11 +177,53 @@ namespace IPhoneFileRenameTool
             label5.TabIndex = 14;
             label5.Text = "Date hour offset";
             // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(23, 142);
+            label6.Name = "label6";
+            label6.Size = new Size(161, 20);
+            label6.TabIndex = 15;
+            label6.Text = "Uwzględnij podfoldery";
+            // 
+            // chkRecursive
+            // 
+            chkRecursive.AutoSize = true;
+            chkRecursive.Location = new Point(190, 145);
+            chkRecursive.Name = "chkRecursive";
+            chkRecursive.Size = new Size(18, 17);
+            chkRecursive.TabIndex = 16;
+            chkRecursive.UseVisualStyleBackColor = true;
+            // 
+            // progressBar
+            // 
+            progressBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            progressBar.Location = new Point(12, 183);
+            progressBar.Name = "progressBar";
+            progressBar.Size = new Size(570, 23);
+            progressBar.TabIndex = 17;
+            // 
+            // btnCancel
+            // 
+            btnCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnCancel.Enabled = false;
+            btnCancel.Location = new Point(374, 218);
+            btnCancel.Name = "btnCancel";
+            btnCancel.Size = new Size(94, 29);
+            btnCancel.TabIndex = 18;
+            btnCancel.Text = "Cancel";
+            btnCancel.UseVisualStyleBackColor = true;
+            btnCancel.Click += btnCancel_Click;
+            // 
             // IPhoneFileRanameForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(594, 199);
+            ClientSize = new Size(594, 259);
+            Controls.Add(label6);
+            Controls.Add(chkRecursive);
+            Controls.Add(progressBar);
+            Controls.Add(btnCancel);
             Controls.Add(label5);
             Controls.Add(numHourOffset);
             Controls.Add(button1);
@@ -213,5 +259,9 @@ namespace IPhoneFileRenameTool
         private Button button1;
         private NumericUpDown numHourOffset;
         private Label label5;
+        private Label label6;
+        private CheckBox chkRecursive;
+        private ProgressBar progressBar;
+        private Button btnCancel;
     }
 }

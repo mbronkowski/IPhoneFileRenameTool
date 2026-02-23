@@ -24,9 +24,14 @@ namespace IPhoneFileRenameTool
         public void IncrementProcessedFiles() => ProcessedFiles++;
         public void IncrementFailedToRetriveCreationDate() => FailedToRetriveCreationDate++;
 
+        public bool IsCancelled { get; private set; } = false;
+        public void SetCancelled() => IsCancelled = true;
+
         public override string ToString()
         {
-            return $"Processed {ProcessedFiles} files{Environment.NewLine}" +
+            string prefix = IsCancelled ? "*** Operacja anulowana ***" + Environment.NewLine : "";
+            return prefix +
+                $"Processed {ProcessedFiles} files{Environment.NewLine}" +
                 $"Renamed {RenamedFiles} files{Environment.NewLine}" +
                 $"Converted {ConvertedFiles} files{Environment.NewLine}" +
                 $"Skipped conversion of {ConversionSkipped} files{Environment.NewLine}" +

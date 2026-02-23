@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:\\\\GitProjects\\\\Private\\\\IPhoneFileRenameTool\\\\IPhoneFileRenameTool\" && dotnet build IPhoneFileRenameTool.sln 2>&)",
+      "Bash(dotnet build:)",
+      "Bash(tail:)"
+    ]
+  }
+}

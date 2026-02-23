@@ -3,7 +3,8 @@
     "allow": [
       "Bash(cd \"C:\\\\GitProjects\\\\Private\\\\IPhoneFileRenameTool\\\\IPhoneFileRenameTool\" && dotnet build IPhoneFileRenameTool.sln 2>&)",
       "Bash(dotnet build:)",
-      "Bash(tail:)"
+      "Bash(tail:)",
+      "Bash(cd \"C:\\\\GitProjects\\\\Private\\\\IPhoneFileRenameTool\" && dotnet build IPhoneFileRenameTool.sln 2>&1)"
     ]
   }
 }

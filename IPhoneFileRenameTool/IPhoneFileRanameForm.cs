@@ -10,7 +10,6 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IPhoneFileRenameTool
 {
@@ -22,6 +21,7 @@ namespace IPhoneFileRenameTool
         {
             InitializeComponent();
             LoadSettingsInRegistry();
+            UpdateFormatPreview();
         }
 
         public IPhoneFileRanameForm(string folderPath) : this()
@@ -55,18 +55,20 @@ namespace IPhoneFileRenameTool
                 btnRename.Enabled = false;
                 btnCancel.Enabled = true;
                 progressBar.Value = 0;
+                lblCurrentFile.Text = string.Empty;
                 _cts = new CancellationTokenSource();
 
-                var progress = new Progress<(int current, int total)>(r =>
+                var progress = new Progress<(int current, int total, string fileName)>(r =>
                 {
                     if (r.total > 0)
                         progressBar.Value = (int)((double)r.current / r.total * 100);
+                    lblCurrentFile.Text = r.fileName;
                 });
 
                 var converter = FileConverter.Create(
                     txtFolder.Text, txtPostfix.Text, txtFormat.Text,
                     chkConvert.Checked, Convert.ToDouble(numHourOffset.Value),
-                    chkRecursive.Checked);
+                    chkRecursive.Checked, chkDeleteAAE.Checked);
 
                 var result = await converter.RenameAndConvertAsync(progress, _cts.Token);
                 if (!result.IsCancelled) progressBar.Value = 100;
@@ -80,6 +82,7 @@ namespace IPhoneFileRenameTool
             {
                 btnRename.Enabled = true;
                 btnCancel.Enabled = false;
+                lblCurrentFile.Text = string.Empty;
                 _cts?.Dispose();
                 _cts = null;
             }
@@ -97,6 +100,38 @@ namespace IPhoneFileRenameTool
             base.OnFormClosing(e);
         }
 
+        private void txtFormat_TextChanged(object sender, EventArgs e)
+        {
+            UpdateFormatPreview();
+        }
+
+        private void UpdateFormatPreview()
+        {
+            try
+            {
+                lblFormatPreview.Text = "np. " + DateTime.Now.ToString(txtFormat.Text) + txtPostfix.Text + ".jpg";
+                lblFormatPreview.ForeColor = SystemColors.GrayText;
+            }
+            catch
+            {
+                lblFormatPreview.Text = "(niepoprawny format daty)";
+                lblFormatPreview.ForeColor = Color.Red;
+            }
+        }
+
+        private void IPhoneFileRanameForm_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data!.GetDataPresent(DataFormats.FileDrop))
+                e.Effect = DragDropEffects.Copy;
+        }
+
+        private void IPhoneFileRanameForm_DragDrop(object sender, DragEventArgs e)
+        {
+            var paths = (string[])e.Data!.GetData(DataFormats.FileDrop)!;
+            if (paths.Length > 0 && System.IO.Directory.Exists(paths[0]))
+                txtFolder.Text = paths[0];
+        }
+
         private void SaveSettingsInRegistry()
         {
             SaveToRegistry("folder", txtFolder.Text);
@@ -105,6 +140,7 @@ namespace IPhoneFileRenameTool
             SaveToRegistry("converHicf", chkConvert.Checked.ToString());
             SaveToRegistry("dateHourOffset", numHourOffset.Value.ToString());
             SaveToRegistry("recursive", chkRecursive.Checked.ToString());
+            SaveToRegistry("deleteAAE", chkDeleteAAE.Checked.ToString());
         }
 
         private void LoadSettingsInRegistry()
@@ -121,10 +157,12 @@ namespace IPhoneFileRenameTool
             var strRecursive = LoadFromRegistry("recursive");
             if (bool.TryParse(strRecursive, out bool recursive))
                 chkRecursive.Checked = recursive;
+            var strDeleteAAE = LoadFromRegistry("deleteAAE");
+            if (bool.TryParse(strDeleteAAE, out bool deleteAAE))
+                chkDeleteAAE.Checked = deleteAAE;
         }
 
         private const string RegistryKeyPath = @"SOFTWARE\EdsSoftware\IphoneFileRanameTool";
-        private string v;
 
         private void SaveToRegistry(string key, string value)
         {
@@ -159,24 +197,17 @@ namespace IPhoneFileRenameTool
 
         private void RegisterFileExplorerAction()
         {
-            // Specify the name of your custom action
             string actionName = "Rename IPhone media files";
-
-
-            // Specify the path to your application executable
-            string appPath = Assembly.GetEntryAssembly().Location; // @"C:\Path\To\Your\Application.exe";
+            string appPath = Assembly.GetEntryAssembly().Location;
             appPath = appPath.Remove(appPath.Length - 3) + "exe";
-            // Create the key for the folder shell
             using (RegistryKey folderShellKey = Registry.ClassesRoot.CreateSubKey(@"Directory\shell\" + actionName))
             {
                 if (folderShellKey != null)
                 {
-                    // Create the key for the command
                     using (RegistryKey commandKey = folderShellKey.CreateSubKey("command"))
                     {
                         if (commandKey != null)
                         {
-                            // Set the default value of the command key to your application path with "%1" as a parameter
                             commandKey.SetValue("", $"\"{appPath}\" \"%1\"");
                         }
                         else
@@ -192,8 +223,6 @@ namespace IPhoneFileRenameTool
             }
 
             Console.WriteLine("Registry entries added successfully. Restart Windows Explorer or refresh the context menu.");
-
-            // Keep the console window open for debugging
             Console.ReadLine();
         }
 

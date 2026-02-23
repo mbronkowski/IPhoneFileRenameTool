@@ -1,4 +1,4 @@
-﻿using ImageMagick;
+using ImageMagick;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.QuickTime;
 using MetadataExtractor;
@@ -20,9 +20,11 @@ namespace IPhoneFileRenameTool
         protected bool ConvertHcifToJpg { get; set; }
         protected double DateHourOffset { get; set; }
         protected bool Recursive { get; set; }
+        protected bool DeleteAaeFiles { get; set; }
         private string _currentFilePath;
         private ConversionResult ConversionResult { get; set; } = new ConversionResult();
-        public static FileConverter Create(string folderPath, string filePostfix, string fileFormat, bool convertHcifToJpg, double dateHourOffset, bool recursive = false)
+
+        public static FileConverter Create(string folderPath, string filePostfix, string fileFormat, bool convertHcifToJpg, double dateHourOffset, bool recursive = false, bool deleteAaeFiles = false)
         {
             var fileConverter = new FileConverter();
             fileConverter.FolderPath = folderPath;
@@ -31,46 +33,12 @@ namespace IPhoneFileRenameTool
             fileConverter.ConvertHcifToJpg = convertHcifToJpg;
             fileConverter.DateHourOffset = dateHourOffset;
             fileConverter.Recursive = recursive;
+            fileConverter.DeleteAaeFiles = deleteAaeFiles;
             return fileConverter;
         }
 
-        public ConversionResult RenameAndConvert()
-        {
-            ConversionResult = new ConversionResult();
-            var files = System.IO.Directory.GetFiles(FolderPath);
-            foreach (var file in files)
-            {
-                _currentFilePath = file;
-                try
-                {
-                    ConversionResult.IncrementProcessedFiles();
-                    if (!IsValidMediaFile())
-                    {
-                        ConversionResult.IncrementConversionSkipped();
-                        continue;
-                    }
-                    if (ShouldBeConverted())
-                    {
-                        ConvertHeifToJpg(file);
-                    }
-                    else
-                    {
-                        ConversionResult.IncrementConversionSkipped();
-                    }
-                    RenameFile();
-                    
-                }
-                catch (Exception ex)
-                {
-                    ConversionResult.IncrementErrors();
-                    Log.Error(ex,"error");
-                }
-            }
-            return ConversionResult;
-        }
-
         public async Task<ConversionResult> RenameAndConvertAsync(
-            IProgress<(int current, int total)>? progress,
+            IProgress<(int current, int total, string fileName)>? progress,
             CancellationToken cancellationToken)
         {
             return await Task.Run(() =>
@@ -91,7 +59,7 @@ namespace IPhoneFileRenameTool
                         break;
                     }
                     _currentFilePath = file;
-                    progress?.Report((++current, total));
+                    progress?.Report((++current, total, Path.GetFileName(file)));
                     try
                     {
                         ConversionResult.IncrementProcessedFiles();
@@ -108,7 +76,7 @@ namespace IPhoneFileRenameTool
 
         private bool IsValidMediaFile()
         {
-            string extension = Path.GetExtension(_currentFilePath).ToUpper();
+            string extension = Path.GetExtension(_currentFilePath).ToUpperInvariant();
             return extension == ".HEIC" || extension == ".JPEG" || extension == ".JPG" || extension == ".MOV" || extension == ".MP4";
         }
 
@@ -117,7 +85,7 @@ namespace IPhoneFileRenameTool
             var dateTeken = GetMediaFileCreationTime(_currentFilePath);
             if (dateTeken != null)
             {
-                if(!FileAlreadyHasCorrectName(dateTeken.Value))
+                if (!FileAlreadyHasCorrectName(dateTeken.Value))
                 {
                     string newFilePath = GetFinalAvaliableCorrectFilePath(dateTeken.Value);
                     File.Move(_currentFilePath, newFilePath);
@@ -131,7 +99,7 @@ namespace IPhoneFileRenameTool
             }
             else
             {
-                ConversionResult.IncrementFailedToRetriveCreationDate();
+                ConversionResult.AddFailedFile(_currentFilePath);
             }
         }
 
@@ -163,7 +131,7 @@ namespace IPhoneFileRenameTool
 
         private bool ShouldBeConverted()
         {
-            return ConvertHcifToJpg && Path.GetExtension(_currentFilePath) == ".HEIC";
+            return ConvertHcifToJpg && Path.GetExtension(_currentFilePath).ToUpperInvariant() == ".HEIC";
         }
 
         private void ConvertHeifToJpg(string heifFilePath)
@@ -176,13 +144,22 @@ namespace IPhoneFileRenameTool
                 File.Delete(heifFilePath);
                 ConversionResult.IncrementConvertedFiles();
             }
+            if (DeleteAaeFiles)
+            {
+                string aaePath = Path.ChangeExtension(heifFilePath, ".AAE");
+                if (File.Exists(aaePath))
+                {
+                    File.Delete(aaePath);
+                    ConversionResult.IncrementDeletedAaeFiles();
+                    Log.Information($"Deleted AAE sidecar: {aaePath}");
+                }
+            }
         }
 
         private DateTime? GetMediaFileCreationTime(string filePath)
         {
             try
             {
-                // Read all metadata from the video file
                 var directories = ImageMetadataReader.ReadMetadata(filePath);
                 if (filePath.EndsWith(".MOV", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".MP4", StringComparison.OrdinalIgnoreCase))
                 {
@@ -208,7 +185,7 @@ namespace IPhoneFileRenameTool
                         return directory.GetDateTime((int)ExifSubIfdDirectory.TagDateTimeOriginal);
                     }
                 }
-                return null; // If creation time couldn't be extracted
+                return null;
             }
             catch (Exception ex)
             {
